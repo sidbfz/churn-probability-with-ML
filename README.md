@@ -231,3 +231,6 @@ The final app shows churning probability, gauge chart of how severe a customer i
 
 
 
+
+# churn-probability-with-ML
+Telecom customer churn probability with machine learning.

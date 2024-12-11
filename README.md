@@ -1,6 +1,9 @@
-# Customer Survival Analysis and Churn Prediction
+# churn-probability-with-ML
+Telecom customer churn probability with machine learning.
+
 Please use python 3.6.8 for proper functioning of the model. I have used the model made by https://github.com/archd3sai. Changed the ui and added feature to upload csv file so that the model can perform operation in bulk and return the csv files with churn probability of customers.
 
+# Customer Survival Analysis and Churn Prediction
 
 Customer attrition, also known as customer churn, customer turnover, or customer defection, is the loss of clients or customers.
 
@@ -232,5 +235,4 @@ The final app shows churning probability, gauge chart of how severe a customer i
 
 
 
-# churn-probability-with-ML
-Telecom customer churn probability with machine learning.
+

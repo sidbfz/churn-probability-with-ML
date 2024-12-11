@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Customer Churn Prediction</title>
+    <style>
+        /* Global Styles */
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        /* Navigation Bar Styles */
+        .navbar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #1f1f1f;
+            padding: 15px 30px;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+        }
+
+        .navbar .logo {
+            position: absolute;
+            left: 50px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #ffffff;
+            text-decoration: none;
+        }
+
+        .navbar ul {
+            list-style: none;
+            display: flex;
+            margin: 0;
+            padding: 0;
+        }
+
+        .navbar ul li {
+            margin: 0 15px;
+        }
+
+        .navbar ul li a {
+            color: #e0e0e0;
+            text-decoration: none;
+            font-size: 16px;
+            position: relative;
+            padding-bottom: 5px;
+            transition: color 0.3s;
+        }
+
+        .navbar ul li a.active, .navbar ul li a:hover {
+            color: #ff9800;
+        }
+
+        .navbar ul li a.active::after, .navbar ul li a:hover::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background-color: #ff9800;
+            bottom: 0;
+            left: 0;
+        }
+
+        /* Toggle Button for Mobile */
+        .toggle-button {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            position: absolute;
+            right: 30px;
+        }
+
+        .toggle-button div {
+            width: 25px;
+            height: 3px;
+            background-color: #e0e0e0;
+            margin: 4px;
+            transition: 0.3s;
+        }
+
+        /* Adjust container to account for fixed navbar */
+        .container {
+            width: 90%;
+            margin: 100px auto 30px;
+            text-align: center;
+            padding: 30px;
+            background: #1e1e1e;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+
+        h1, h4 {
+            text-align: center;
+            color: #ffffff;
+            margin-bottom: 15px;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
+        }
+
+        /* Form Styles */
+        form {
+            text-align: center;
+        }
+
+        input[type="checkbox"] + label {
+            margin-right: 20px;
+            color: #e0e0e0;
+        }
+
+        input[type="number"], select {
+            width: 220px;
+            padding: 12px;
+            margin: 8px;
+            border: none;
+            border-radius: 6px;
+            outline: none;
+            font-size: 14px;
+            background: #333333;
+            color: #e0e0e0;
+        }
+
+        /* Submit Button Styles */
+        button {
+            background: #444444;
+            border: none;
+            color: #ffffff;
+            padding: 15px 35px;
+            font-size: 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.3s;
+            margin-top: 15px;
+        }
+
+        button:hover {
+            background: #555555;
+            transform: scale(1.05);
+        }
+
+        /* Prediction Text Styles */
+        .prediction {
+            color: #ff9800;
+            font-size: 18px;
+            margin-top: 25px;
+        }
+
+        /* Images Container Styles */
+        .images-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 25px;
+            margin-top: 25px;
+        }
+
+        /* Individual Image Items */
+        .image-item {
+            flex: 1 1 300px;
+            max-width: 45%;
+            background: #2b2b2b;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.5);
+        }
+
+        /* Add specific styling for SHAP plot */
+        .image-item:last-child {
+            flex: 2 1 600px;
+            max-width: 90%;
+        }
+
+        .image-item:last-child img {
+            width: 100%;
+            height: auto;
+            object-fit: contain;
+        }
+
+        .image-item h3 {
+            text-align: center;
+            color: #ffffff;
+            margin-bottom: 12px;
+        }
+
+        .image-item img {
+            width: 100%;
+            height: auto;
+            object-fit: contain;
+            border: 1px solid #555555;
+            border-radius: 6px;
+            padding: 5px;
+            transition: transform 0.2s;
+            cursor: pointer;
+        }
+
+        .image-item img:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(255, 152, 0, 0.7);
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            padding-top: 60px;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.95);
+        }
+
+        .modal-content {
+            margin: auto;
+            display: block;
+            width: 80%;
+            max-width: 90%;
+            max-height: 80vh;
+            object-fit: contain;
+            animation: zoom 0.6s;
+        }
+
+        #caption {
+            margin: auto;
+            display: block;
+            width: 80%;
+            max-width: 1200px;
+            text-align: center;
+            color: #cccccc;
+            padding: 10px 0;
+        }
+
+        .close {
+            position: absolute;
+            top: 25px;
+            right: 45px;
+            color: #ffffff;
+            font-size: 35px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .close:hover {
+            color: #ff9800;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 10px #ffffff; }
+            to { text-shadow: 0 0 20px #ff9800; }
+        }
+
+        @keyframes zoom {
+            from {transform:scale(0)} 
+            to {transform:scale(1)}
+        }
+
+        /* Responsive Design */
+        @media screen and (max-width: 768px) {
+            .navbar ul {
+                flex-direction: column;
+                gap: 15px;
+                background-color: #2a2a2a;
+                position: absolute;
+                top: 60px;
+                right: 0;
+                width: 220px;
+                display: none;
+                padding: 20px 0;
+            }
+
+            .navbar ul.show {
+                display: flex;
+            }
+
+            .navbar .toggle-button {
+                display: flex;
+            }
+
+            .container {
+                margin-top: 80px;
+                padding: 20px;
+            }
+
+            .image-item {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <a href="{{ url_for('home') }}" class="logo">Churn Predictor</a>
+        <div class="toggle-button" onclick="toggleMenu()">
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+        <ul id="nav-links">
+            <li><a href="{{ url_for('home') }}" class="{% if request.path == url_for('home') %}active{% endif %}">Home</a></li>
+            <li><a href="{{ url_for('upload_file') }}" class="{% if request.path == url_for('upload_file') %}active{% endif %}">Upload CSV</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <h1>Customer Churn Prediction</h1>
+        <h4>Capstone Project</h4>
+        <form action="{{ url_for('predict') }}" method="post">
+            <div>
+                <input type="checkbox" id="SeniorCitizen" name="SeniorCitizen" value="1">
+                <label for="SeniorCitizen">Senior Citizen</label>
+                <input type="checkbox" id="Partner" name="Partner" value="1">
+                <label for="Partner">Has a partner</label>
+                <input type="checkbox" id="Dependents" name="Dependents" value="1">
+                <label for="Dependents">Has dependents</label>
+                <input type="checkbox" id="PaperlessBilling" name="PaperlessBilling" value="1">
+                <label for="PaperlessBilling">Paperless Billing</label>
+            </div>
+            <br>
+            <div>
+                <input type="checkbox" id="PhoneService" name="PhoneService" value="1">
+                <label for="PhoneService">Phone Service</label>
+                <input type="checkbox" id="MultipleLines" name="MultipleLines" value="1">
+                <label for="MultipleLines">Multiple Lines</label>
+                <input type="checkbox" id="OnlineSecurity" name="OnlineSecurity" value="1">
+                <label for="OnlineSecurity">Online Security</label>
+                <input type="checkbox" id="OnlineBackup" name="OnlineBackup" value="1">
+                <label for="OnlineBackup">Online Backup</label>
+            </div>
+            <br>
+            <div>
+                <input type="checkbox" id="DeviceProtection" name="DeviceProtection" value="1">
+                <label for="DeviceProtection">Device Protection</label>&nbsp;&nbsp;&nbsp;
+                <input type="checkbox" id="TechSupport" name="TechSupport" value="1">
+                <label for="TechSupport">Tech Support</label>&nbsp;&nbsp;&nbsp;
+                <input type="checkbox" id="StreamingTV" name="StreamingTV" value="1">
+                <label for="StreamingTV">Streaming TV</label>&nbsp;&nbsp;&nbsp;
+                <input type="checkbox" id="StreamingMovies" name="StreamingMovies" value="1">
+                <label for="StreamingMovies">Streaming Movies</label>
+            </div>
+            <br>
+            <div>
+                <label for="gender">Gender:</label>
+                <select id="gender" name="gender">
+                    <option value="0">Male</option>
+                    <option value="1">Female</option>
+                </select>
+                <label for="InternetService">Internet Service:</label>
+                <select id="InternetService" name="InternetService">
+                    <option value="0">No</option>
+                    <option value="1">DSL</option>
+                    <option value="2">Fiber optic</option>
+                </select>
+                <br>
+                <label for="Contract">Contract:</label>
+                <select id="Contract" name="Contract">
+                    <option value="0">Month-to-Month</option>
+                    <option value="1">One-Year</option>
+                    <option value="2">Two-Year</option>
+                </select>
+                <label for="PaymentMethod">Payment Method:</label>
+                <select id="PaymentMethod" name="PaymentMethod">
+                    <option value="0">Automatic: Bank Transfer</option>
+                    <option value="1">Automatic: Credit Card</option>
+                    <option value="2">Electronic Check</option>
+                    <option value="3">Mailed Check</option>
+                </select>
+            </div>
+            <br>
+            <div>
+                <input type="number" min="0" name="MonthlyCharges" placeholder="Monthly Charges" required>
+                <input type="number" min="0" name="Tenure" placeholder="Tenure in Months" required>
+            </div>
+            <br><br>
+            <button type="submit">Predict</button>
+        </form>
+        <br>
+        <div style="text-align: center;">
+            <span class="prediction">{{ prediction_text }}</span>
+        </div>
+        <br><br>
+        <div class="images-container">
+            {% if url_1 %}
+                <div class="image-item">
+                    <h3>Cumulative Hazard Function</h3>
+                    <img src="data:image/png;base64,{{ url_1 }}" alt="Cumulative Hazard Function" onclick="openModal(this)">
+                </div>
+            {% endif %}
+            
+            {% if url_2 %}
+                <div class="image-item">
+                    <h3>Churn Probability Gauge</h3>
+                    <img src="data:image/png;base64,{{ url_2 }}" alt="Churn Probability Gauge" onclick="openModal(this)">
+                </div>
+            {% endif %}
+            
+            {% if url_3 %}
+                <div class="image-item">
+                    <h3>Survival Function</h3>
+                    <img src="data:image/png;base64,{{ url_3 }}" alt="Survival Function" onclick="openModal(this)">
+                </div>
+            {% endif %}
+    
+            {% if url_4 or url_5 %}
+                <div class="image-item">
+                    <h3>SHAP Force Plot</h3>
+                    {% if url_4 %}
+                        <img src="data:image/png;base64,{{ url_4 }}" alt="SHAP Force Plot 1" onclick="openModal(this)">
+                    {% endif %}
+                    {% if url_5 %}
+                        <img src="data:image/png;base64,{{ url_5 }}" alt="SHAP Force Plot 2" onclick="openModal(this)">
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Modal for Enlarged Images -->
+    <div id="myModal" class="modal">
+        <span class="close">&times;</span>
+        <img class="modal-content" id="modalImg">
+        <div id="caption"></div>
+    </div>
+
+    <!-- JavaScript for Modal and Navbar Toggle -->
+    <script>
+        // Modal functionality
+        var modal = document.getElementById("myModal");
+        var modalImg = document.getElementById("modalImg");
+        var captionText = document.getElementById("caption");
+        var images = document.querySelectorAll(".images-container img");
+
+        images.forEach(function(img) {
+            img.onclick = function(){
+                modal.style.display = "block";
+                modalImg.src = this.src;
+                captionText.innerHTML = this.alt;
+            }
+        });
+
+        var span = document.getElementsByClassName("close")[0];
+        span.onclick = function() { 
+            modal.style.display = "none";
+        }
+
+        // Navbar toggle for mobile
+        function toggleMenu() {
+            var navLinks = document.getElementById("nav-links");
+            navLinks.classList.toggle("show");
+        }
+    </script>
+</body>
+</html>

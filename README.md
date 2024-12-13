@@ -1,4 +1,5 @@
 # Churn-Probability-with-ML
+
 Telecom customer churn probability with machine learning.
 
 Please use python 3.6.8 for proper functioning of the model. I have used the model made by https://github.com/archd3sai. Changed the ui and added feature to upload csv file so that the model can perform operation in bulk and return the csv files with churn probability of customers.
